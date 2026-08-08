@@ -1,0 +1,163 @@
+import { useEffect, useState } from 'react';
+import { App as AntApp, Button, Input, Tag, Tooltip, Typography, Upload } from 'antd';
+import {
+  CloudUploadOutlined,
+  DeleteOutlined,
+  ExpandAltOutlined,
+  SwapOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
+import SizePicker, { MAX_SELECTED_SIZES } from './SizePicker';
+import { TargetSize } from '../types';
+
+const { Dragger } = Upload;
+
+export interface ComposerSubmit {
+  file: File | null;
+  description: string;
+  sizes: TargetSize[];
+}
+
+interface ComposerProps {
+  /** Banner already attached to this chat — lets the user generate more sizes without re-uploading. */
+  existingBannerUrl?: string | null;
+  generating: boolean;
+  onSubmit: (input: ComposerSubmit) => void;
+}
+
+export default function Composer({ existingBannerUrl, generating, onSubmit }: ComposerProps) {
+  const { message } = AntApp.useApp();
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [selectedSizes, setSelectedSizes] = useState<TargetSize[]>([]);
+  const [replacing, setReplacing] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  // A different chat was opened — drop any staged upload.
+  useEffect(() => {
+    setFile(null);
+    setPreviewUrl(null);
+    setReplacing(false);
+    setSelectedSizes([]);
+  }, [existingBannerUrl]);
+
+  const acceptFile = (nextFile: File): boolean => {
+    if (!nextFile.type.startsWith('image/')) {
+      message.error('Please upload an image file (PNG, JPG, WebP…).');
+      return false;
+    }
+    if (nextFile.size > 15 * 1024 * 1024) {
+      message.error('The image must be smaller than 15 MB.');
+      return false;
+    }
+    setFile(nextFile);
+    setPreviewUrl(URL.createObjectURL(nextFile));
+    setReplacing(false);
+    return false; // handled manually on submit
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setPreviewUrl(null);
+  };
+
+  const hasBanner = Boolean(file) || (Boolean(existingBannerUrl) && !replacing);
+  const canSubmit = hasBanner && selectedSizes.length > 0 && !generating;
+
+  const submit = () => {
+    if (!canSubmit) return;
+    onSubmit({ file, description, sizes: selectedSizes });
+    setDescription('');
+    setSelectedSizes([]);
+    setReplacing(false);
+  };
+
+  const showUploader = !file && (!existingBannerUrl || replacing);
+
+  return (
+    <div className="composer">
+      {showUploader ? (
+        <div className="upload-dragger">
+          <Dragger accept="image/*" multiple={false} fileList={[]} beforeUpload={acceptFile} showUploadList={false}>
+            <div className="upload-inline">
+              <CloudUploadOutlined style={{ fontSize: 20, color: '#5d87ff' }} />
+              <Typography.Text style={{ fontSize: 13.5 }}>
+                Drop your banner here or <span style={{ color: '#7ba0ff' }}>browse</span>
+              </Typography.Text>
+            </div>
+          </Dragger>
+          {existingBannerUrl && replacing && (
+            <Button type="link" size="small" onClick={() => setReplacing(false)} style={{ marginTop: 4 }}>
+              Keep current banner
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="composer-banner">
+          <div className="composer-thumb">
+            <img src={file ? previewUrl! : existingBannerUrl!} alt="Selected banner" />
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Typography.Text strong style={{ display: 'block', wordBreak: 'break-all' }}>
+              {file ? file.name : 'Current banner'}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
+              {file ? `${(file.size / 1024).toFixed(0)} KB` : 'Reused for new sizes'}
+            </Typography.Text>
+          </div>
+          {file ? (
+            <Tooltip title="Remove">
+              <Button icon={<DeleteOutlined />} onClick={clearFile} disabled={generating} danger ghost size="small" />
+            </Tooltip>
+          ) : (
+            <Button icon={<SwapOutlined />} size="small" onClick={() => setReplacing(true)} disabled={generating}>
+              Change
+            </Button>
+          )}
+        </div>
+      )}
+
+      <Input.TextArea
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+        placeholder='Optional instructions… e.g. "Make the product slightly more prominent."'
+        autoSize={{ minRows: 1, maxRows: 4 }}
+        maxLength={500}
+        disabled={generating}
+        style={{ marginTop: 10 }}
+      />
+
+      <div className="sizes-head">
+        <ExpandAltOutlined style={{ color: '#7aa2ff' }} />
+        <span style={{ fontWeight: 600, fontSize: 13 }}>Target sizes</span>
+        {selectedSizes.length > 0 && (
+          <Tag color="blue" bordered={false}>
+            {selectedSizes.length}/{MAX_SELECTED_SIZES}
+          </Tag>
+        )}
+      </div>
+      <SizePicker selected={selectedSizes} onChange={setSelectedSizes} disabled={generating} />
+
+      <div className="composer-footer">
+        <Button
+          className="gradient-btn"
+          type="primary"
+          size="large"
+          icon={<ThunderboltOutlined />}
+          loading={generating}
+          disabled={!canSubmit}
+          onClick={submit}
+        >
+          {generating ? 'Generating…' : 'Generate'}
+        </Button>
+      </div>
+    </div>
+  );
+}
