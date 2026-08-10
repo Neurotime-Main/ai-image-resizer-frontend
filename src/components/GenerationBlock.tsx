@@ -1,7 +1,8 @@
 import { Alert, Tag, Typography } from 'antd';
 import { PictureOutlined, ThunderboltFilled } from '@ant-design/icons';
 import ResultsGrid, { PendingResultsGrid } from './ResultsGrid';
-import { GeneratedResult, TargetSize } from '../types';
+import { GeneratedResult, ImageProviderName, TargetSize } from '../types';
+import { providerColor, providerLabel } from '../providers';
 import { sizeKey } from './SizePicker';
 import { assetUrl } from '../api/client';
 import { parseServerDate } from '../utils/date';
@@ -23,6 +24,7 @@ interface RequestBubbleProps {
   originalHeight?: number | null;
   description: string;
   sizes: TargetSize[];
+  providers: ImageProviderName[];
   createdAt?: string;
 }
 
@@ -32,6 +34,7 @@ function RequestBubble({
   originalHeight,
   description,
   sizes,
+  providers,
   createdAt,
 }: RequestBubbleProps) {
   return (
@@ -67,6 +70,11 @@ function RequestBubble({
               {size.width} × {size.height}
             </Tag>
           ))}
+          {providers.map((provider) => (
+            <Tag key={provider} bordered={false} className="size-tag" color={providerColor(provider)}>
+              {providerLabel(provider)}
+            </Tag>
+          ))}
         </div>
       </div>
     </div>
@@ -90,11 +98,12 @@ export default function GenerationBlock({ results, pending, ...request }: Genera
         <div className="msg-ai-body">
           {pending && (
             <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12, fontSize: 13 }}>
-              Adapting {request.sizes.length} size{request.sizes.length === 1 ? '' : 's'}…
+              Adapting {request.sizes.length} size{request.sizes.length === 1 ? '' : 's'}
+              {request.providers.length > 1 ? ` with ${request.providers.length} models` : ''}…
             </Typography.Text>
           )}
           {pending ? (
-            <PendingResultsGrid sizes={request.sizes} />
+            <PendingResultsGrid sizes={request.sizes} providers={request.providers} />
           ) : (results?.length ?? 0) === 0 ? (
             <Alert
               type="warning"

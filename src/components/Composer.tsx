@@ -1,38 +1,59 @@
-import { useEffect, useState } from 'react';
-import { App as AntApp, Button, Input, Tag, Tooltip, Typography, Upload } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { App as AntApp, Button, Input, Segmented, Tag, Tooltip, Typography, Upload } from 'antd';
 import {
   CloudUploadOutlined,
   DeleteOutlined,
   ExpandAltOutlined,
+  ExperimentOutlined,
   SwapOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import SizePicker, { MAX_SELECTED_SIZES } from './SizePicker';
-import { TargetSize } from '../types';
+import { ImageProviderName, ProviderInfo, TargetSize } from '../types';
+import { providerColor } from '../providers';
 import { assetUrl } from '../api/client';
 
 const { Dragger } = Upload;
+
+/** Selector value: a single provider name, or "both" to compare them. */
+const COMPARE = 'both';
 
 export interface ComposerSubmit {
   file: File | null;
   description: string;
   sizes: TargetSize[];
+  providers: ImageProviderName[];
 }
 
 interface ComposerProps {
   /** Banner already attached to this chat — lets the user generate more sizes without re-uploading. */
   existingBannerUrl?: string | null;
+  /** Models the server has keys for; the selector only appears when there are two. */
+  providers: ProviderInfo[];
   generating: boolean;
   onSubmit: (input: ComposerSubmit) => void;
 }
 
-export default function Composer({ existingBannerUrl, generating, onSubmit }: ComposerProps) {
+export default function Composer({ existingBannerUrl, providers, generating, onSubmit }: ComposerProps) {
   const { message } = AntApp.useApp();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [selectedSizes, setSelectedSizes] = useState<TargetSize[]>([]);
   const [replacing, setReplacing] = useState(false);
+  const [providerChoice, setProviderChoice] = useState<string | null>(null);
+
+  const available = useMemo(() => providers.filter((entry) => entry.configured), [providers]);
+
+  // Default to the first configured model, and recover if the selection is no
+  // longer offered (providers load asynchronously).
+  useEffect(() => {
+    setProviderChoice((current) => {
+      if (current === COMPARE && available.length > 1) return current;
+      if (current && available.some((entry) => entry.name === current)) return current;
+      return available[0]?.name ?? null;
+    });
+  }, [available]);
 
   useEffect(() => {
     return () => {
@@ -68,12 +89,19 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
     setPreviewUrl(null);
   };
 
+  const comparing = providerChoice === COMPARE;
+  const chosenProviders: ImageProviderName[] = comparing
+    ? available.map((entry) => entry.name)
+    : providerChoice
+      ? [providerChoice as ImageProviderName]
+      : [];
+
   const hasBanner = Boolean(file) || (Boolean(existingBannerUrl) && !replacing);
-  const canSubmit = hasBanner && selectedSizes.length > 0 && !generating;
+  const canSubmit = hasBanner && selectedSizes.length > 0 && chosenProviders.length > 0 && !generating;
 
   const submit = () => {
     if (!canSubmit) return;
-    onSubmit({ file, description, sizes: selectedSizes });
+    onSubmit({ file, description, sizes: selectedSizes, providers: chosenProviders });
     setDescription('');
     setSelectedSizes([]);
     setReplacing(false);
@@ -134,6 +162,48 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
         disabled={generating}
         style={{ marginTop: 10 }}
       />
+
+      {available.length > 1 && (
+        <>
+          <div className="sizes-head">
+            <ExperimentOutlined style={{ color: '#7aa2ff' }} />
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Model</span>
+            {comparing && (
+              <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 'auto' }}>
+                Each size is generated twice — once per model.
+              </Typography.Text>
+            )}
+          </div>
+          <Segmented
+            block
+            value={providerChoice ?? undefined}
+            onChange={(value) => setProviderChoice(String(value))}
+            disabled={generating}
+            options={[
+              ...available.map((entry) => ({
+                value: entry.name,
+                label: (
+                  <Tooltip title={entry.model}>
+                    <span className="provider-option">
+                      <span className="provider-dot" style={{ background: providerColor(entry.name) }} />
+                      {entry.label}
+                    </span>
+                  </Tooltip>
+                ),
+              })),
+              {
+                value: COMPARE,
+                label: (
+                  <span className="provider-option">
+                    <SwapOutlined />
+                    Compare both
+                  </span>
+                ),
+              },
+            ]}
+          />
+        </>
+      )}
 
       <div className="sizes-head">
         <ExpandAltOutlined style={{ color: '#7aa2ff' }} />

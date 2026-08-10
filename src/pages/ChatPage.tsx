@@ -6,12 +6,13 @@ import GenerationBlock from '../components/GenerationBlock';
 import { extractErrorMessage } from '../api/client';
 import { fetchChat, generateBanners } from '../api/chats';
 import { useChats } from '../context/ChatsContext';
-import { Generation, TargetSize } from '../types';
+import { Generation, ImageProviderName, TargetSize } from '../types';
 
 interface PendingRequest {
   previewUrl: string;
   description: string;
   sizes: TargetSize[];
+  providers: ImageProviderName[];
 }
 
 export default function ChatPage() {
@@ -19,7 +20,7 @@ export default function ChatPage() {
   const chatId = chatIdParam ? Number(chatIdParam) : null;
   const navigate = useNavigate();
   const { message } = AntApp.useApp();
-  const { upsertChat } = useChats();
+  const { upsertChat, providers: availableProviders } = useChats();
 
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loadingChat, setLoadingChat] = useState(false);
@@ -72,17 +73,17 @@ export default function ChatPage() {
 
   const existingBannerUrl = generations.length > 0 ? generations[generations.length - 1].originalUrl : null;
 
-  const handleSubmit = async ({ file, description, sizes }: ComposerSubmit) => {
+  const handleSubmit = async ({ file, description, sizes, providers }: ComposerSubmit) => {
     const previewUrl = file ? URL.createObjectURL(file) : existingBannerUrl;
     if (!previewUrl) return;
     if (file) pendingObjectUrlRef.current = previewUrl;
 
     setGenerating(true);
-    setPending({ previewUrl, description, sizes });
+    setPending({ previewUrl, description, sizes, providers });
     scrollToBottom();
 
     try {
-      const data = await generateBanners({ chatId, file, description, sizes });
+      const data = await generateBanners({ chatId, file, description, sizes, providers });
       upsertChat(data.chat);
 
       if (chatId === null) {
@@ -141,6 +142,7 @@ export default function ChatPage() {
               originalHeight={generation.originalHeight}
               description={generation.description}
               sizes={generation.sizes}
+              providers={generation.providers}
               createdAt={generation.createdAt}
               results={generation.results}
             />
@@ -152,6 +154,7 @@ export default function ChatPage() {
             originalUrl={pending.previewUrl}
             description={pending.description}
             sizes={pending.sizes}
+            providers={pending.providers}
             pending
           />
         )}
@@ -164,7 +167,12 @@ export default function ChatPage() {
       </div>
 
       <div className="composer-dock">
-        <Composer existingBannerUrl={existingBannerUrl} generating={generating} onSubmit={handleSubmit} />
+        <Composer
+          existingBannerUrl={existingBannerUrl}
+          providers={availableProviders}
+          generating={generating}
+          onSubmit={handleSubmit}
+        />
       </div>
     </div>
   );

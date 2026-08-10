@@ -1,10 +1,12 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as chatsApi from '../api/chats';
-import { Chat } from '../types';
+import { Chat, ProviderInfo } from '../types';
 import { useAuth } from './AuthContext';
 
 interface ChatsContextValue {
   chats: Chat[];
+  /** Image models the server has keys for — drives the composer's selector. */
+  providers: ProviderInfo[];
   loading: boolean;
   refresh: () => Promise<void>;
   upsertChat: (chat: Chat) => void;
@@ -21,6 +23,7 @@ function sortChats(list: Chat[]): Chat[] {
 export function ChatsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -35,14 +38,20 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) {
       setChats([]);
+      setProviders([]);
       return;
     }
     refresh().catch(() => undefined);
+    chatsApi
+      .fetchProviders()
+      .then(setProviders)
+      .catch(() => undefined);
   }, [user, refresh]);
 
   const value = useMemo<ChatsContextValue>(
     () => ({
       chats,
+      providers,
       loading,
       refresh,
       upsertChat: (chat) =>
@@ -56,7 +65,7 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
         setChats((current) => sortChats(current.map((item) => (item.id === chatId ? updated : item))));
       },
     }),
-    [chats, loading, refresh]
+    [chats, providers, loading, refresh]
   );
 
   return <ChatsContext.Provider value={value}>{children}</ChatsContext.Provider>;

@@ -1,5 +1,5 @@
 import client from './client';
-import { Chat, Generation, TargetSize } from '../types';
+import { Chat, Generation, ImageProviderName, ProviderInfo, TargetSize } from '../types';
 
 export async function fetchChats(): Promise<Chat[]> {
   const { data } = await client.get<{ chats: Chat[] }>('/chats');
@@ -20,11 +20,18 @@ export async function deleteChat(chatId: number): Promise<void> {
   await client.delete(`/chats/${chatId}`);
 }
 
+export async function fetchProviders(): Promise<ProviderInfo[]> {
+  const { data } = await client.get<{ providers: ProviderInfo[] }>('/generate/providers');
+  return data.providers;
+}
+
 export interface GenerateInput {
   chatId: number | null;
   file: File | null;
   description: string;
   sizes: TargetSize[];
+  /** One model, or several to compare them on the same banner. */
+  providers: ImageProviderName[];
 }
 
 export async function generateBanners(
@@ -35,6 +42,7 @@ export async function generateBanners(
   if (input.chatId !== null) formData.append('chatId', String(input.chatId));
   formData.append('description', input.description.trim());
   formData.append('sizes', JSON.stringify(input.sizes));
+  formData.append('provider', input.providers.join(','));
 
   const { data } = await client.post<{ chat: Chat; generation: Generation }>('/generate', formData, {
     timeout: 600000,
