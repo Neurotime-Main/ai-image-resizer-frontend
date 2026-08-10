@@ -4,6 +4,7 @@ import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 import client, { extractErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { User, UserStats } from '../types';
+import { parseServerDate } from '../utils/date';
 
 interface ProfileFormValues {
   name: string;
@@ -67,7 +68,7 @@ export default function ProfilePage() {
   };
 
   const memberSince = user?.createdAt
-    ? new Date(`${user.createdAt.replace(' ', 'T')}Z`).toLocaleDateString(undefined, {
+    ? parseServerDate(user.createdAt).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',

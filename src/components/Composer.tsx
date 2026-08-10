@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import SizePicker, { MAX_SELECTED_SIZES } from './SizePicker';
 import { TargetSize } from '../types';
+import { assetUrl } from '../api/client';
 
 const { Dragger } = Upload;
 
@@ -101,7 +102,7 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
       ) : (
         <div className="composer-banner">
           <div className="composer-thumb">
-            <img src={file ? previewUrl! : existingBannerUrl!} alt="Selected banner" />
+            <img src={file ? previewUrl! : assetUrl(existingBannerUrl!)} alt="Selected banner" />
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>

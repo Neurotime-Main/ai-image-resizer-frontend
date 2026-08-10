@@ -46,7 +46,14 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-Vite proxies `/api` and `/uploads` to `http://localhost:4000` (see `vite.config.ts`), so no
-environment variables are needed in development.
+The backend origin comes from `VITE_API_URL`:
+
+| File               | Used by         | Value                                   |
+| ------------------ | --------------- | --------------------------------------- |
+| `.env.development` | `npm run dev`   | `http://localhost:4000`                 |
+| `.env.production`  | `npm run build` | your deployed backend origin            |
+
+All API calls and image URLs are resolved against it (`src/api/client.ts`); leave it empty when
+the backend serves the frontend from the same origin.
 
 Production build: `npm run build` → static bundle in `dist/`.

@@ -10,12 +10,14 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useChats } from '../context/ChatsContext';
+import { assetUrl } from '../api/client';
+import { parseServerDate } from '../utils/date';
 import { extractErrorMessage } from '../api/client';
 import { Chat } from '../types';
 
 function groupLabel(updatedAt: string): string {
   // SQLite returns "YYYY-MM-DD HH:MM:SS" in UTC.
-  const date = new Date(`${updatedAt.replace(' ', 'T')}Z`);
+  const date = parseServerDate(updatedAt);
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.floor((startOfToday.getTime() - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()) / 86400000);
@@ -133,7 +135,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
                   }}
                 >
                   {chat.thumbUrl ? (
-                    <img className="chat-thumb" src={chat.thumbUrl} alt="" />
+                    <img className="chat-thumb" src={assetUrl(chat.thumbUrl)} alt="" />
                   ) : (
                     <span className="chat-thumb chat-thumb-placeholder">
                       <MessageOutlined />

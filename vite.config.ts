@@ -1,13 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// The API origin comes from VITE_API_URL (.env.development / .env.production);
+// the backend allows the dev origin via its CORS_ORIGIN setting.
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    proxy: {
-      '/api': 'http://localhost:4000',
-      '/uploads': 'http://localhost:4000',
-    },
   },
 });

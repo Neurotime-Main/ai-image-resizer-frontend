@@ -3,6 +3,7 @@ import { Alert, App as AntApp, Button, Card, Image, Spin, Tag, Typography } from
 import { DownloadOutlined, Loading3QuartersOutlined } from '@ant-design/icons';
 import { GeneratedResult, TargetSize } from '../types';
 import { sizeKey } from './SizePicker';
+import { assetUrl } from '../api/client';
 
 async function downloadImage(url: string, filename: string) {
   const response = await fetch(url);
@@ -72,7 +73,7 @@ export default function ResultsGrid({ results }: { results: GeneratedResult[] })
     if (!result.url) return;
     setDownloading(result.id);
     try {
-      await downloadImage(result.url, `banner_${result.width}x${result.height}.png`);
+      await downloadImage(assetUrl(result.url), `banner_${result.width}x${result.height}.png`);
     } catch {
       message.error('Could not download the image. Please try again.');
     } finally {
@@ -100,7 +101,7 @@ export default function ResultsGrid({ results }: { results: GeneratedResult[] })
             <>
               <div className="result-image-frame" style={frameStyle}>
                 <Image
-                  src={result.url}
+                  src={assetUrl(result.url)}
                   alt={`Adapted banner ${result.width}x${result.height}`}
                   preview={{ mask: 'Preview' }}
                 />

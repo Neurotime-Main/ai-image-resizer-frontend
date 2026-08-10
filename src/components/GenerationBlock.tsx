@@ -3,10 +3,12 @@ import { PictureOutlined, ThunderboltFilled } from '@ant-design/icons';
 import ResultsGrid, { PendingResultsGrid } from './ResultsGrid';
 import { GeneratedResult, TargetSize } from '../types';
 import { sizeKey } from './SizePicker';
+import { assetUrl } from '../api/client';
+import { parseServerDate } from '../utils/date';
 
 function formatTime(value?: string): string {
   if (!value) return '';
-  const date = new Date(`${value.replace(' ', 'T')}Z`);
+  const date = parseServerDate(value);
   return date.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -50,7 +52,7 @@ function RequestBubble({
         </div>
 
         <div className="msg-thumb-frame">
-          <img src={originalUrl} alt="Uploaded banner" />
+          <img src={assetUrl(originalUrl)} alt="Uploaded banner" />
         </div>
 
         {description.trim() && (

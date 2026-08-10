@@ -3,7 +3,19 @@ import axios from 'axios';
 export const TOKEN_KEY = 'bannerai_token';
 export const USER_KEY = 'bannerai_user';
 
-const client = axios.create({ baseURL: '/api' });
+/** Backend origin from the build-time env; empty means same origin. */
+export const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
+/**
+ * Resolves a backend-relative asset path (e.g. /uploads/results/x.png)
+ * against the API origin. Absolute, blob: and data: URLs pass through.
+ */
+export function assetUrl(path: string): string {
+  if (!path || /^(https?:|blob:|data:)/.test(path)) return path;
+  return `${API_URL}${path}`;
+}
+
+const client = axios.create({ baseURL: `${API_URL}/api` });
 
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
