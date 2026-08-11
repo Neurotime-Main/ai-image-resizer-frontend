@@ -626,7 +626,10 @@ body {
 .result-image-frame .ant-image-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  /* scale-down, not contain: a result smaller than the frame (a 100x100 icon
+     in a 148px frame) must render at its true size, never browser-upscaled —
+     upscaling is what makes a correct small export look blurry. */
+  object-fit: scale-down;
   cursor: zoom-in;
   display: block;
 }
