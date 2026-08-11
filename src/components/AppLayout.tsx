@@ -73,8 +73,6 @@ export default function AppLayout() {
           </Dropdown>
         </header>
 
-        <h1>5555</h1>
-
         <div className="app-scroll">
           <Outlet />
         </div>
