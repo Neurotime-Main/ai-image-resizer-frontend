@@ -13,6 +13,14 @@ import { assetUrl } from '../api/client';
 
 const { Dragger } = Upload;
 
+/** Keep in sync with MAX_UPLOAD_MB in backend/src/middlewares/upload.middleware.ts. */
+const MAX_UPLOAD_MB = 100;
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 export interface ComposerSubmit {
   file: File | null;
   description: string;
@@ -53,8 +61,8 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
       message.error('Please upload an image file (PNG, JPG, WebP…).');
       return false;
     }
-    if (nextFile.size > 15 * 1024 * 1024) {
-      message.error('The image must be smaller than 15 MB.');
+    if (nextFile.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      message.error(`The image must be smaller than ${MAX_UPLOAD_MB} MB.`);
       return false;
     }
     setFile(nextFile);
@@ -110,7 +118,7 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
               {file ? file.name : 'Current banner'}
             </Typography.Text>
             <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
-              {file ? `${(file.size / 1024).toFixed(0)} KB` : 'Reused for new sizes'}
+              {file ? formatFileSize(file.size) : 'Reused for new sizes'}
             </Typography.Text>
           </div>
           {file ? (
