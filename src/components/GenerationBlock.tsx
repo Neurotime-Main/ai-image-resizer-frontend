@@ -1,4 +1,4 @@
-import { Alert, Tag, Typography } from 'antd';
+import { Alert, Image, Tag, Typography } from 'antd';
 import { PictureOutlined, ThunderboltFilled } from '@ant-design/icons';
 import ResultsGrid, { PendingResultsGrid } from './ResultsGrid';
 import { GeneratedResult, TargetSize } from '../types';
@@ -39,11 +39,14 @@ function RequestBubble({
       <div className="msg-bubble">
         <div className="msg-bubble-head">
           <PictureOutlined style={{ color: '#7aa2ff' }} />
-          {originalWidth && originalHeight ? (
-            <Typography.Text style={{ fontSize: 13 }}>
+          <Typography.Text strong style={{ fontSize: 13 }}>
+            Original
+          </Typography.Text>
+          {originalWidth && originalHeight && (
+            <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
               {originalWidth} × {originalHeight}
             </Typography.Text>
-          ) : null}
+          )}
           {createdAt && (
             <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 'auto' }}>
               {formatTime(createdAt)}
@@ -52,7 +55,11 @@ function RequestBubble({
         </div>
 
         <div className="msg-thumb-frame">
-          <img src={assetUrl(originalUrl)} alt="Uploaded banner" />
+          <Image
+            src={assetUrl(originalUrl)}
+            alt="Uploaded banner"
+            preview={{ mask: 'Preview' }}
+          />
         </div>
 
         {description.trim() && (
@@ -61,12 +68,17 @@ function RequestBubble({
           </Typography.Paragraph>
         )}
 
-        <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {sizes.map((size) => (
-            <Tag key={sizeKey(size)} bordered={false} className="size-tag">
-              {size.width} × {size.height}
-            </Tag>
-          ))}
+        <div style={{ marginTop: 12 }}>
+          <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>
+            Targeted
+          </Typography.Text>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {sizes.map((size) => (
+              <Tag key={sizeKey(size)} bordered={false} className="size-tag">
+                {size.width} × {size.height}
+              </Tag>
+            ))}
+          </div>
         </div>
       </div>
     </div>

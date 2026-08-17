@@ -41,6 +41,16 @@ function cardStyle(width: number, height: number) {
 
 const frameStyle = { height: PREVIEW_HEIGHT };
 
+function methodTag(result: GeneratedResult) {
+  if (result.method === 'pixel_resize') return <Tag color="green">Pixel preserved</Tag>;
+  if (result.method === 'protected_extension') return <Tag color="blue">Protected layout</Tag>;
+  if (result.method === 'generative_reflow') {
+    const score = result.fidelityScore === undefined ? '' : ` · ${result.fidelityScore}%`;
+    return <Tag color="purple">AI reflow{score}</Tag>;
+  }
+  return null;
+}
+
 export function PendingResultsGrid({ sizes }: { sizes: TargetSize[] }) {
   return (
     <div className="results-grid">
@@ -94,7 +104,7 @@ export default function ResultsGrid({ results }: { results: GeneratedResult[] })
             <Typography.Text strong style={{ fontSize: 13 }}>
               {result.width} × {result.height}
             </Typography.Text>
-            {result.status === 'error' && <Tag color="error">Failed</Tag>}
+            {result.status === 'error' ? <Tag color="error">Failed</Tag> : methodTag(result)}
           </div>
 
           {result.status === 'done' && result.url ? (

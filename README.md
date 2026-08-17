@@ -25,6 +25,8 @@ spacing, minimal animation.
 - **Size picker** — eight presets always visible in one compact row, plus custom width × height.
 - **Justified result gallery** — previews share a uniform height while each card's width follows
   its format's proportions, so cards line up in tidy rows and wrap onto further lines.
+- **Preservation status** — each result identifies whether it used exact source pixels, an intact
+  protected layout, or a visually validated AI reflow.
 - **Profile page** — account stats plus editing of name, email, and password.
 
 ## Pages

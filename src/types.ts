@@ -24,6 +24,8 @@ export interface GeneratedResult {
   url?: string;
   filename?: string;
   error?: string;
+  method?: 'pixel_resize' | 'protected_extension' | 'generative_reflow';
+  fidelityScore?: number;
 }
 
 export interface Chat {

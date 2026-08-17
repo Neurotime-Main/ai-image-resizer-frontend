@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { App as AntApp, Button, Input, Tag, Tooltip, Typography, Upload } from 'antd';
 import {
   CloudUploadOutlined,
@@ -15,6 +15,14 @@ const { Dragger } = Upload;
 
 /** Keep in sync with MAX_UPLOAD_MB in backend/src/middlewares/upload.middleware.ts. */
 const MAX_UPLOAD_MB = 100;
+const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/avif';
+const SUPPORTED_IMAGE_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+]);
 
 function formatFileSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -40,7 +48,7 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [selectedSizes, setSelectedSizes] = useState<TargetSize[]>([]);
-  const [replacing, setReplacing] = useState(false);
+  const replacementInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     return () => {
@@ -52,13 +60,13 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
   useEffect(() => {
     setFile(null);
     setPreviewUrl(null);
-    setReplacing(false);
     setSelectedSizes([]);
+    if (replacementInputRef.current) replacementInputRef.current.value = '';
   }, [existingBannerUrl]);
 
   const acceptFile = (nextFile: File): boolean => {
-    if (!nextFile.type.startsWith('image/')) {
-      message.error('Please upload an image file (PNG, JPG, WebP…).');
+    if (!SUPPORTED_IMAGE_TYPES.has(nextFile.type)) {
+      message.error('Please upload a PNG, JPEG, WebP, GIF, or AVIF image.');
       return false;
     }
     if (nextFile.size > MAX_UPLOAD_MB * 1024 * 1024) {
@@ -67,7 +75,7 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
     }
     setFile(nextFile);
     setPreviewUrl(URL.createObjectURL(nextFile));
-    setReplacing(false);
+    if (replacementInputRef.current) replacementInputRef.current.value = '';
     return false; // handled manually on submit
   };
 
@@ -76,7 +84,7 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
     setPreviewUrl(null);
   };
 
-  const hasBanner = Boolean(file) || (Boolean(existingBannerUrl) && !replacing);
+  const hasBanner = Boolean(file) || Boolean(existingBannerUrl);
   const canSubmit = hasBanner && selectedSizes.length > 0 && !generating;
 
   const submit = () => {
@@ -84,16 +92,21 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
     onSubmit({ file, description, sizes: selectedSizes });
     setDescription('');
     setSelectedSizes([]);
-    setReplacing(false);
   };
 
-  const showUploader = !file && (!existingBannerUrl || replacing);
+  const showUploader = !file && !existingBannerUrl;
 
   return (
     <div className="composer">
       {showUploader ? (
         <div className="upload-dragger">
-          <Dragger accept="image/*" multiple={false} fileList={[]} beforeUpload={acceptFile} showUploadList={false}>
+          <Dragger
+            accept={IMAGE_ACCEPT}
+            multiple={false}
+            fileList={[]}
+            beforeUpload={acceptFile}
+            showUploadList={false}
+          >
             <div className="upload-inline">
               <CloudUploadOutlined style={{ fontSize: 20, color: '#5d87ff' }} />
               <Typography.Text style={{ fontSize: 13.5 }}>
@@ -101,11 +114,6 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
               </Typography.Text>
             </div>
           </Dragger>
-          {existingBannerUrl && replacing && (
-            <Button type="link" size="small" onClick={() => setReplacing(false)} style={{ marginTop: 4 }}>
-              Keep current banner
-            </Button>
-          )}
         </div>
       ) : (
         <div className="composer-banner">
@@ -126,12 +134,29 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
               <Button icon={<DeleteOutlined />} onClick={clearFile} disabled={generating} danger ghost size="small" />
             </Tooltip>
           ) : (
-            <Button icon={<SwapOutlined />} size="small" onClick={() => setReplacing(true)} disabled={generating}>
+            <Button
+              icon={<SwapOutlined />}
+              size="small"
+              onClick={() => replacementInputRef.current?.click()}
+              disabled={generating}
+            >
               Change
             </Button>
           )}
         </div>
       )}
+
+      <input
+        ref={replacementInputRef}
+        type="file"
+        accept={IMAGE_ACCEPT}
+        hidden
+        onChange={(event) => {
+          const selected = event.target.files?.[0];
+          if (selected) acceptFile(selected);
+          else event.target.value = '';
+        }}
+      />
 
       <Input.TextArea
         value={description}
