@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   ExpandAltOutlined,
   SwapOutlined,
+  StopOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import SizePicker, { MAX_SELECTED_SIZES } from './SizePicker';
@@ -40,9 +41,10 @@ interface ComposerProps {
   existingBannerUrl?: string | null;
   generating: boolean;
   onSubmit: (input: ComposerSubmit) => void;
+  onStop: () => void;
 }
 
-export default function Composer({ existingBannerUrl, generating, onSubmit }: ComposerProps) {
+export default function Composer({ existingBannerUrl, generating, onSubmit, onStop }: ComposerProps) {
   const { message } = AntApp.useApp();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -180,17 +182,22 @@ export default function Composer({ existingBannerUrl, generating, onSubmit }: Co
       <SizePicker selected={selectedSizes} onChange={setSelectedSizes} disabled={generating} />
 
       <div className="composer-footer">
-        <Button
-          className="gradient-btn"
-          type="primary"
-          size="large"
-          icon={<ThunderboltOutlined />}
-          loading={generating}
-          disabled={!canSubmit}
-          onClick={submit}
-        >
-          {generating ? 'Generating…' : 'Generate'}
-        </Button>
+        {generating ? (
+          <Button danger type="primary" size="large" icon={<StopOutlined />} onClick={onStop}>
+            Stop
+          </Button>
+        ) : (
+          <Button
+            className="gradient-btn"
+            type="primary"
+            size="large"
+            icon={<ThunderboltOutlined />}
+            disabled={!canSubmit}
+            onClick={submit}
+          >
+            Generate
+          </Button>
+        )}
       </div>
     </div>
   );

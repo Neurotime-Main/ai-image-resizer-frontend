@@ -52,4 +52,8 @@ export function extractErrorMessage(error: unknown, fallback = 'Something went w
   return fallback;
 }
 
+export function isRequestCancelled(error: unknown): boolean {
+  return axios.isCancel(error) || (error instanceof DOMException && error.name === 'AbortError');
+}
+
 export default client;

@@ -25,6 +25,7 @@ export interface GenerateInput {
   file: File | null;
   description: string;
   sizes: TargetSize[];
+  signal?: AbortSignal;
 }
 
 export async function generateBanners(
@@ -38,6 +39,7 @@ export async function generateBanners(
 
   const { data } = await client.post<{ chat: Chat; generation: Generation }>('/generate', formData, {
     timeout: 600000,
+    signal: input.signal,
   });
   return data;
 }

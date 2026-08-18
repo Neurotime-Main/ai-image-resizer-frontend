@@ -3,7 +3,7 @@ import { App as AntApp, Skeleton, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import Composer, { ComposerSubmit } from '../components/Composer';
 import GenerationBlock from '../components/GenerationBlock';
-import { extractErrorMessage } from '../api/client';
+import { extractErrorMessage, isRequestCancelled } from '../api/client';
 import { fetchChat, generateBanners } from '../api/chats';
 import { useChats } from '../context/ChatsContext';
 import { Generation, TargetSize } from '../types';
@@ -29,6 +29,7 @@ export default function ChatPage() {
   // Chat we just created locally — its data is already in state, so skip the refetch.
   const seededChatRef = useRef<number | null>(null);
   const pendingObjectUrlRef = useRef<string | null>(null);
+  const generationAbortRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }));
@@ -80,9 +81,11 @@ export default function ChatPage() {
     setGenerating(true);
     setPending({ previewUrl, description, sizes });
     scrollToBottom();
+    const abortController = new AbortController();
+    generationAbortRef.current = abortController;
 
     try {
-      const data = await generateBanners({ chatId, file, description, sizes });
+      const data = await generateBanners({ chatId, file, description, sizes, signal: abortController.signal });
       upsertChat(data.chat);
 
       if (chatId === null) {
@@ -104,8 +107,9 @@ export default function ChatPage() {
       }
       scrollToBottom();
     } catch (error) {
-      message.error(extractErrorMessage(error));
+      if (!isRequestCancelled(error)) message.error(extractErrorMessage(error));
     } finally {
+      if (generationAbortRef.current === abortController) generationAbortRef.current = null;
       setGenerating(false);
       setPending(null);
       if (pendingObjectUrlRef.current) {
@@ -113,6 +117,10 @@ export default function ChatPage() {
         pendingObjectUrlRef.current = null;
       }
     }
+  };
+
+  const handleStop = () => {
+    generationAbortRef.current?.abort();
   };
 
   const isEmptyNewChat = chatId === null && !pending;
@@ -164,7 +172,12 @@ export default function ChatPage() {
       </div>
 
       <div className="composer-dock">
-        <Composer existingBannerUrl={existingBannerUrl} generating={generating} onSubmit={handleSubmit} />
+        <Composer
+          existingBannerUrl={existingBannerUrl}
+          generating={generating}
+          onSubmit={handleSubmit}
+          onStop={handleStop}
+        />
       </div>
     </div>
   );
