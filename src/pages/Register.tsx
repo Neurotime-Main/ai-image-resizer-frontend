@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Alert, Button, Form, Input, Typography } from 'antd';
+import { Alert, Button, Form, Input } from 'antd';
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import { extractErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -14,17 +14,19 @@ interface RegisterFormValues {
 }
 
 export default function RegisterPage() {
-  const { register } = useAuth();
-  const navigate = useNavigate();
+  const { createUser } = useAuth();
+  const [form] = Form.useForm<RegisterFormValues>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createdEmail, setCreatedEmail] = useState<string | null>(null);
 
   const onFinish = async (values: RegisterFormValues) => {
     setSubmitting(true);
     setError(null);
     try {
-      await register(values.name, values.email, values.password);
-      navigate('/app', { replace: true });
+      const user = await createUser(values.name, values.email, values.password);
+      form.resetFields();
+      setCreatedEmail(user.email);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -33,9 +35,19 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout title="Create your account" subtitle="Start adapting banners in minutes">
+    <AuthLayout title="Create an account" subtitle="Administrator-only account provisioning">
       {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 20 }} />}
-      <Form<RegisterFormValues> layout="vertical" onFinish={onFinish} requiredMark={false}>
+      {createdEmail && (
+        <Alert
+          type="success"
+          message={`Account created for ${createdEmail}.`}
+          showIcon
+          closable
+          onClose={() => setCreatedEmail(null)}
+          style={{ marginBottom: 20 }}
+        />
+      )}
+      <Form<RegisterFormValues> form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
         <Form.Item
           name="name"
           label="Name"
@@ -44,7 +56,7 @@ export default function RegisterPage() {
             { min: 2, message: 'Name must be at least 2 characters.' },
           ]}
         >
-          <Input prefix={<UserOutlined style={{ color: '#6e81ad' }} />} placeholder="Your name" autoComplete="name" />
+          <Input prefix={<UserOutlined style={{ color: '#6e81ad' }} />} placeholder="User name" autoComplete="name" />
         </Form.Item>
         <Form.Item
           name="email"
@@ -103,8 +115,7 @@ export default function RegisterPage() {
         </Button>
       </Form>
       <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <Typography.Text type="secondary">Already have an account? </Typography.Text>
-        <Link to="/login">Login</Link>
+        <Link to="/app">Back to BannerAI</Link>
       </div>
     </AuthLayout>
   );

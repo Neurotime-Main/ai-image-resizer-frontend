@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Avatar, Button, Drawer, Dropdown, Grid, Typography } from 'antd';
-import { LogoutOutlined, MenuOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, MenuOutlined, SettingOutlined, UserAddOutlined, UserOutlined } from '@ant-design/icons';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +31,16 @@ export default function AppLayout() {
         label: 'Profile settings',
         onClick: () => navigate('/app/profile'),
       },
+      ...(user?.isAdmin
+        ? [
+            {
+              key: 'create-user',
+              icon: <UserAddOutlined />,
+              label: 'Create account',
+              onClick: () => navigate('/admin/register'),
+            },
+          ]
+        : []),
       { key: 'logout', icon: <LogoutOutlined />, label: 'Logout', onClick: logout },
     ],
   };

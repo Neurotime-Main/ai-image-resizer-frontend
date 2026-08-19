@@ -15,8 +15,8 @@ spacing, minimal animation.
 
 ## Features
 
-- **Auth** — register / login, JWT stored client-side, authenticated users land on `/app`,
-  unauthenticated ones are redirected to `/login`.
+- **Auth** — visitors can only log in. The one server-configured administrator can create accounts
+  from a protected page; JWT sessions send authenticated users to `/app`.
 - **Chat-style history** — a sidebar of past adaptations grouped by date, each with a thumbnail.
   Opening one replays the uploaded banner, the instructions, the sizes chosen, and every generated
   image. Chats can be renamed or deleted.
@@ -34,7 +34,7 @@ spacing, minimal animation.
 | Route            | Description                          |
 | ---------------- | ------------------------------------ |
 | `/login`         | Login                                |
-| `/register`      | Registration                         |
+| `/admin/register` | Administrator-only account creation |
 | `/app`           | New adaptation                       |
 | `/app/c/:chatId` | An existing chat and its history     |
 | `/app/profile`   | Profile settings                     |

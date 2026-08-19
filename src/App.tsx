@@ -32,6 +32,14 @@ function PublicOnly({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { user, initializing } = useAuth();
+  if (initializing) return <FullScreenLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.isAdmin) return <Navigate to="/app" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <ConfigProvider theme={appTheme}>
@@ -49,11 +57,11 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/register"
+                  path="/admin/register"
                   element={
-                    <PublicOnly>
+                    <RequireAdmin>
                       <RegisterPage />
-                    </PublicOnly>
+                    </RequireAdmin>
                   }
                 />
                 <Route

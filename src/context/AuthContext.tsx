@@ -6,7 +6,7 @@ interface AuthContextValue {
   user: User | null;
   initializing: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  createUser: (name: string, email: string, password: string) => Promise<User>;
   logout: () => void;
   /** Applies a profile update returned by the API to the cached session. */
   applyUser: (user: User) => void;
@@ -63,13 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await client.post<{ token: string; user: User }>('/auth/login', { email, password });
         persistSession(data.token, data.user);
       },
-      register: async (name, email, password) => {
-        const { data } = await client.post<{ token: string; user: User }>('/auth/register', {
+      createUser: async (name, email, password) => {
+        const { data } = await client.post<{ user: User }>('/auth/register', {
           name,
           email,
           password,
         });
-        persistSession(data.token, data.user);
+        return data.user;
       },
       logout: () => {
         localStorage.removeItem(TOKEN_KEY);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Alert, Button, Form, Input, Typography } from 'antd';
+import { Alert, Button, Form, Input } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import { extractErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -67,10 +67,6 @@ export default function LoginPage() {
           Login
         </Button>
       </Form>
-      <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <Typography.Text type="secondary">Don&apos;t have an account? </Typography.Text>
-        <Link to="/register">Create account</Link>
-      </div>
     </AuthLayout>
   );
 }

@@ -31,7 +31,7 @@ client.interceptors.response.use(
     const status = error?.response?.status;
     const url: string = error?.config?.url ?? '';
     // Expired/invalid session anywhere outside the auth endpoints -> force re-login.
-    if (status === 401 && !url.includes('/auth/login') && !url.includes('/auth/register')) {
+    if (status === 401 && !url.includes('/auth/login')) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       if (window.location.pathname !== '/login') {
